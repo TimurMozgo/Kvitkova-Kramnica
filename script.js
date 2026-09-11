@@ -18,6 +18,7 @@ const I18N = {
     appSubtitle: 'Свіжі квіти щодня',
     heroTitle: 'Ласкаво просимо!',
     heroText: 'Створюйте букети мрії з нашими свіжими квітами',
+    heroCta: 'Перейти до каталогу',
     feat1Title: 'Швидка доставка',
     feat1Text: 'Від 30 хвилин по місту',
     feat2Title: 'Свіжі квіти',
@@ -25,6 +26,8 @@ const I18N = {
     feat3Title: 'Найкращі ціни',
     feat3Text: 'Прямі поставки',
     catalogTitle: 'Каталог',
+    catalogEmptyTitle: 'Каталог порожній',
+    catalogEmptyText: 'Товари ще не додані',
     backBtn: 'Назад',
     pdFeature1: 'Свіжі квіти',
     pdFeature2: 'Швидка доставка',
@@ -57,6 +60,7 @@ const I18N = {
     photoHint: 'До 5 фото, до 5 МБ кожне',
     photoBtn: 'Додати фото',
     adminAddBtn: 'Додати',
+    adminEditBtn: 'Зберегти',
     adminProducts: 'Товари',
     navHome: 'Головна',
     navCatalog: 'Каталог',
@@ -90,6 +94,7 @@ const I18N = {
     appSubtitle: 'Свежие цветы каждый день',
     heroTitle: 'Добро пожаловать!',
     heroText: 'Создавайте букеты мечты с нашими свежими цветами',
+    heroCta: 'Перейти к каталогу',
     feat1Title: 'Быстрая доставка',
     feat1Text: 'От 30 минут по городу',
     feat2Title: 'Свежие цветы',
@@ -97,6 +102,8 @@ const I18N = {
     feat3Title: 'Лучшие цены',
     feat3Text: 'Прямые поставки',
     catalogTitle: 'Каталог',
+    catalogEmptyTitle: 'Каталог пуст',
+    catalogEmptyText: 'Товары ещё не добавлены',
     backBtn: 'Назад',
     pdFeature1: 'Свежие цветы',
     pdFeature2: 'Быстрая доставка',
@@ -123,12 +130,13 @@ const I18N = {
     adminTitle: 'Админ-панель',
     adminAddTitle: 'Добавить товар',
     prodNamePh: 'Название',
-    prodPricePh: 'Цена ()',
+    prodPricePh: 'Цена (₴)',
     prodDescPh: 'Описание',
     photoLabel: 'Фото товара',
     photoHint: 'До 5 фото, до 5 МБ каждое',
     photoBtn: 'Добавить фото',
     adminAddBtn: 'Добавить',
+    adminEditBtn: 'Сохранить',
     adminProducts: 'Товары',
     navHome: 'Главная',
     navCatalog: 'Каталог',
@@ -160,6 +168,7 @@ const I18N = {
 };
 
 let currentLang = localStorage.getItem('fl_lang') || 'ua';
+let editingProductId = null; // Для режима редактирования
 
 function t(key) {
   return I18N[currentLang]?.[key] || I18N.ua[key] || key;
@@ -175,7 +184,7 @@ function applyTranslations() {
     el.placeholder = t(el.dataset.i18nPlaceholder);
   });
   updateFlowerSelect();
-  document.title = ' ' + t('appTitle');
+  document.title = '🌸 ' + t('appTitle');
   document.documentElement.lang = currentLang === 'ua' ? 'uk' : 'ru';
 }
 
@@ -183,7 +192,7 @@ function updateFlowerSelect() {
   const select = document.getElementById('prodIcon');
   if (!select) return;
   const flowers = [
-    { value: 'rose', label: t('flowerRose'), emoji: '' },
+    { value: 'rose', label: t('flowerRose'), emoji: '🌹' },
     { value: 'tulip', label: t('flowerTulip'), emoji: '🌷' },
     { value: 'daisy', label: t('flowerDaisy'), emoji: '🌼' },
     { value: 'sunflower', label: t('flowerSunflower'), emoji: '🌻' },
@@ -195,14 +204,7 @@ function updateFlowerSelect() {
 }
 
 // ============ STATE ============
-const DEFAULT_PRODUCTS = [
-  { id: 1, name: { ua: 'Букет "Ніжність"', ru: 'Букет "Нежность"' }, price: 1200, desc: { ua: 'Ніжний букет з рожевих троянд — ідеальний подарунок для коханої людини. Кожна квітка свіжа та ароматна, зібрана вручну нашими флористами. Стоїть у вазі до 10 днів.', ru: 'Нежный букет из розовых роз — идеальный подарок для любимого человека. Каждый цветок свежий и ароматный, собран вручную нашими флористами. Стоит в вазе до 10 дней.' }, icon: 'rose', images: [] },
-  { id: 2, name: { ua: 'Тюльпани мікс', ru: 'Тюльпаны микс' }, price: 850, desc: { ua: 'Яскравий мікс з 25 тюльпанів різних кольорів. Весняний настрій у кожному пелюстці. Чудово підходить для свята або просто так.', ru: 'Яркий микс из 25 тюльпанов разных цветов. Весеннее настроение в каждом лепестке. Отлично подходит для праздника или просто так.' }, icon: 'tulip', images: [] },
-  { id: 3, name: { ua: 'Ромашкова галявина', ru: 'Ромашковый луг' }, price: 700, desc: { ua: 'Свіжі ромашки — символ чистоти та ніжності. Легкий та повітряний букет, який подарує радість.', ru: 'Свежие ромашки — символ чистоты и нежности. Лёгкий и воздушный букет, который подарит радость.' }, icon: 'daisy', images: [] },
-  { id: 4, name: { ua: 'Сонячний день', ru: 'Солнечный день' }, price: 1050, desc: { ua: '7 великих соняшників — заряд позитиву та літнього тепла. Створять атмосферу радості у будь-якому приміщенні.', ru: '7 больших подсолнухов — заряд позитива и летнего тепла. Создадут атмосферу радости в любом помещении.' }, icon: 'sunflower', images: [] },
-  { id: 5, name: { ua: 'Лавандовий сон', ru: 'Лавандовый сон' }, price: 900, desc: { ua: 'Ароматна лаванда — ідеальний засіб для релаксу. Її ніжний запах заспокоює та дарує відчуття гармонії.', ru: 'Ароматная лаванда — идеальное средство для релакса. Её нежный запах успокаивает и дарит ощущение гармонии.' }, icon: 'lavender', images: [] },
-  { id: 6, name: { ua: 'Букет "Троянда"', ru: 'Букет "Роза"' }, price: 1500, desc: { ua: 'Класичний букет з 25 червоних троянд. Втілення кохання та пристрасті. Найкращий вибір для особливих моментів.', ru: 'Классический букет из 25 красных роз. Воплощение любви и страсти. Лучший выбор для особых моментов.' }, icon: 'rose', images: [] }
-];
+const DEFAULT_PRODUCTS = []; // Убрали заглушки
 
 let products = JSON.parse(localStorage.getItem('fl_products')) || DEFAULT_PRODUCTS;
 let cart = JSON.parse(localStorage.getItem('fl_cart')) || [];
@@ -233,9 +235,25 @@ const FLOWER_SVGS = {
 const ICON_PLUS = `<svg viewBox="0 0 24 24"><path d="M12 5 L12 19 M5 12 L19 12" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>`;
 const ICON_MINUS = `<svg viewBox="0 0 24 24"><path d="M5 12 L19 12" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>`;
 const ICON_DELETE = `<svg viewBox="0 0 24 24"><path d="M6 6 L18 18 M6 18 L18 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>`;
+const ICON_EDIT = `<svg viewBox="0 0 24 24"><path d="M12 20 L20 12 L16 8 L8 16 Z M16 8 L18 6 C19 5, 20 5, 21 6 L22 7 C23 8, 23 9, 22 10 L20 12 Z" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
 function formatPrice(price) {
   return price.toLocaleString('uk-UA') + ' ₴';
+}
+
+// ============ ADMIN VISIBILITY ============
+const ADMIN_IDS = [1246079025, 6088315974];
+
+function isAdmin() {
+  const userId = tg?.initDataUnsafe?.user?.id;
+  return userId && ADMIN_IDS.includes(Number(userId));
+}
+
+function updateAdminVisibility() {
+  const adminBtn = document.getElementById('adminBtn');
+  if (adminBtn) {
+    adminBtn.style.display = isAdmin() ? 'flex' : 'none';
+  }
 }
 
 // ============ FAVORITES FUNCTIONS ============
@@ -336,11 +354,7 @@ function renderOrders() {
   list.innerHTML = sortedOrders.map((order, i) => {
     const date = new Date(order.date);
     const dateStr = date.toLocaleDateString(currentLang === 'ua' ? 'uk-UA' : 'ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
     });
     
     const itemsHtml = order.items && order.items.length > 0 
@@ -348,12 +362,7 @@ function renderOrders() {
           const itemName = item.name || 'Товар';
           const itemPrice = item.price || 0;
           const itemQty = item.qty || 1;
-          return `
-            <div class="order-item-row">
-              <span>${escapeHtml(itemName)} × ${itemQty}</span>
-              <span>${formatPrice(itemPrice * itemQty)}</span>
-            </div>
-          `;
+          return `<div class="order-item-row"><span>${escapeHtml(itemName)} × ${itemQty}</span><span>${formatPrice(itemPrice * itemQty)}</span></div>`;
         }).join('')
       : '<div class="order-item-row"><span>Нет товаров</span><span>0 ₴</span></div>';
     
@@ -364,9 +373,7 @@ function renderOrders() {
           <div class="order-status">${t('orderStatus')} <span class="status-badge">В обробці</span></div>
         </div>
         <div class="order-date">${t('orderDate')} ${dateStr}</div>
-        <div class="order-items">
-          ${itemsHtml}
-        </div>
+        <div class="order-items">${itemsHtml}</div>
         <div class="order-total">${t('orderTotal')} <strong>${formatPrice(order.total || 0)}</strong></div>
       </div>
     `;
@@ -386,6 +393,8 @@ langSwitch.addEventListener('click', () => {
     localStorage.setItem('fl_lang', currentLang);
     langLabel.textContent = currentLang.toUpperCase();
     applyTranslations();
+    updateAdminVisibility(); // Обновляем видимость админки при смене языка
+    
     const activeScreen = document.querySelector('.screen--active')?.dataset.screen;
     if (activeScreen === 'catalog') renderCatalog();
     if (activeScreen === 'cart') renderCart();
@@ -413,7 +422,7 @@ function showScreen(name, addToHistory = true) {
   haptic('light');
 
   if (tg?.BackButton) {
-    if (name === 'product' || name === 'order' || name === 'admin') {
+    if (name === 'product' || name === 'order' || name === 'admin' || name === 'favorites' || name === 'orders') {
       tg.BackButton.show();
     } else {
       tg.BackButton.hide();
@@ -436,15 +445,36 @@ if (tg?.BackButton) {
     const current = document.querySelector('.screen--active')?.dataset.screen;
     if (current === 'product') showScreen('catalog', false);
     else if (current === 'order') showScreen('cart', false);
-    else if (current === 'admin') showScreen('profile', false);
-    else if (current === 'favorites' || current === 'orders') showScreen('profile', false);
+    else if (current === 'admin' || current === 'favorites' || current === 'orders') showScreen('profile', false);
     else showScreen('home', false);
   });
 }
 
+// Кнопка CTA на главном экране
+document.getElementById('heroCtaBtn')?.addEventListener('click', () => {
+  showScreen('catalog');
+});
+
 // ============ CATALOG ============
 function renderCatalog() {
   const catalog = document.getElementById('catalog');
+  
+  if (products.length === 0) {
+    catalog.innerHTML = `
+      <div class="catalog-empty">
+        <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="60" cy="60" r="55" fill="#FFE5EC"/>
+          <path d="M40 50 L80 50 L75 85 L45 85 Z" stroke="#FF6B9D" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M50 50 L50 40 C50 35, 55 32, 60 32 C65 32, 70 35, 70 40 L70 50" stroke="#FF6B9D" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <circle cx="60" cy="70" r="3" fill="#FF6B9D"/>
+        </svg>
+        <p data-i18n="catalogEmptyTitle">${t('catalogEmptyTitle')}</p>
+        <span data-i18n="catalogEmptyText">${t('catalogEmptyText')}</span>
+      </div>
+    `;
+    return;
+  }
+  
   catalog.innerHTML = products.map((p, i) => `
     <div class="product-card" data-id="${p.id}" style="animation-delay: ${i * 0.05}s">
       <div class="product-image">
@@ -487,8 +517,7 @@ function renderCatalog() {
   catalog.querySelectorAll('.favorite-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const id = parseInt(btn.dataset.id);
-      toggleFavorite(id);
+      toggleFavorite(parseInt(btn.dataset.id));
     });
   });
 }
@@ -526,9 +555,7 @@ function renderProductDetail(id) {
   `).join('');
 
   if (images.length > 1) {
-    dots.innerHTML = images.map((_, i) =>
-      `<span class="gallery__dot ${i === 0 ? 'active' : ''}" data-index="${i}"></span>`
-    ).join('');
+    dots.innerHTML = images.map((_, i) => `<span class="gallery__dot ${i === 0 ? 'active' : ''}" data-index="${i}"></span>`).join('');
     dots.style.display = 'flex';
     counter.textContent = `1 / ${images.length}`;
     counter.style.display = 'block';
@@ -578,16 +605,14 @@ function setupGalleryScroll(track, dots, counter, total) {
       dots.querySelectorAll('.gallery__dot').forEach((dot, i) => {
         dot.classList.toggle('active', i === index);
       });
-      if (total > 1) {
-        counter.textContent = `${index + 1} / ${total}`;
-      }
+      if (total > 1) counter.textContent = `${index + 1} / ${total}`;
     }, 50);
   }, { passive: true });
 }
 
-document.getElementById('backToCatalog').addEventListener('click', () => {
-  showScreen('catalog', false);
-});
+document.getElementById('backToCatalog').addEventListener('click', () => showScreen('catalog', false));
+document.getElementById('backToFavorites')?.addEventListener('click', () => showScreen('profile', false));
+document.getElementById('backToOrders')?.addEventListener('click', () => showScreen('profile', false));
 
 // ============ CART ============
 function addToCart(id) {
@@ -647,12 +672,9 @@ function renderCart() {
   list.innerHTML = cart.map((item, i) => {
     const p = products.find(pr => pr.id === item.id);
     if (!p) {
-      // Если товар удалён, показываем заглушку
       return `
         <div class="cart-item" style="animation-delay: ${i * 0.05}s; opacity: 0.6;">
-          <div class="cart-item__img">
-            <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="#ddd"/></svg>
-          </div>
+          <div class="cart-item__img"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="#ddd"/></svg></div>
           <div class="cart-item__info">
             <div class="cart-item__name">Товар видалено</div>
             <div class="cart-item__price" style="color: var(--danger);">Недоступен</div>
@@ -695,6 +717,8 @@ function renderCart() {
       const id = parseInt(btn.dataset.id);
       if (btn.dataset.action === 'remove') {
         cart = cart.filter(i => i.id !== id);
+        renderCart();
+        updateCartBadge(true);
       } else {
         changeQty(id, btn.dataset.action === 'plus' ? 1 : -1);
       }
@@ -728,7 +752,6 @@ phoneInput.addEventListener('input', (e) => {
   if (v.length >= 6) formatted += ') ' + v.slice(5, 8);
   if (v.length >= 9) formatted += '-' + v.slice(8, 10);
   if (v.length >= 11) formatted += '-' + v.slice(10, 12);
-
   e.target.value = formatted;
 });
 
@@ -765,11 +788,7 @@ orderForm.addEventListener('submit', (e) => {
     phone: phoneInput.value,
     items: cart.map(i => {
       const p = products.find(pr => pr.id === i.id);
-      return { 
-        name: p ? getLocalizedName(p) : 'Товар удалён', 
-        qty: i.qty, 
-        price: p?.price || 0 
-      };
+      return { name: p ? getLocalizedName(p) : 'Товар видалено', qty: i.qty, price: p?.price || 0 };
     }),
     total: orderTotal,
     currency: 'UAH',
@@ -788,23 +807,17 @@ orderForm.addEventListener('submit', (e) => {
   saveCart();
   updateCartBadge();
   orderForm.reset();
-
   openModal();
   haptic('success');
 });
 
 // ============ MODAL ============
 const modal = document.getElementById('successModal');
-
-function openModal() {
-  modal.classList.add('modal--active');
-}
-
+function openModal() { modal.classList.add('modal--active'); }
 function closeModal() {
   modal.classList.remove('modal--active');
   setTimeout(() => showScreen('home', false), 300);
 }
-
 document.getElementById('closeModal').addEventListener('click', closeModal);
 modal.querySelector('.modal__backdrop').addEventListener('click', closeModal);
 
@@ -815,46 +828,23 @@ function updateProfileName() {
   if (tg?.initDataUnsafe?.user) {
     const u = tg.initDataUnsafe.user;
     profileName.textContent = [u.first_name, u.last_name].filter(Boolean).join(' ') || t('user');
+    if (u.photo_url) {
+      document.getElementById('profileAvatar').innerHTML = 
+        `<img src="${u.photo_url}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
+    }
   } else {
     profileName.textContent = t('guest');
   }
 }
 
-document.getElementById('adminBtn').addEventListener('click', () => {
-  showScreen('admin');
-});
-
-// Обработчики кнопок меню профиля
 document.querySelectorAll('.menu-item').forEach(item => {
   item.addEventListener('click', () => {
     const action = item.dataset.action;
-    if (action === 'favorites') {
-      renderFavorites();
-      showScreen('favorites');
-    } else if (action === 'orders') {
-      renderOrders();
-      showScreen('orders');
-    } else if (action === 'admin') {
-      showScreen('admin');
-    }
+    if (action === 'favorites') { renderFavorites(); showScreen('favorites'); } 
+    else if (action === 'orders') { renderOrders(); showScreen('orders'); } 
+    else if (action === 'admin') { showScreen('admin'); }
   });
 });
-
-// Кнопка назад из избранного
-const backToFavorites = document.getElementById('backToFavorites');
-if (backToFavorites) {
-  backToFavorites.addEventListener('click', () => {
-    showScreen('profile', false);
-  });
-}
-
-// Кнопка назад из заказов
-const backToOrders = document.getElementById('backToOrders');
-if (backToOrders) {
-  backToOrders.addEventListener('click', () => {
-    showScreen('profile', false);
-  });
-}
 
 // ============ IMAGE COMPRESSION ============
 function compressImage(file, maxSize = 800, quality = 0.75) {
@@ -865,7 +855,6 @@ function compressImage(file, maxSize = 800, quality = 0.75) {
       img.onload = () => {
         const canvas = document.createElement('canvas');
         let { width, height } = img;
-
         if (width > height && width > maxSize) {
           height = Math.round(height * (maxSize / width));
           width = maxSize;
@@ -873,7 +862,6 @@ function compressImage(file, maxSize = 800, quality = 0.75) {
           width = Math.round(width * (maxSize / height));
           height = maxSize;
         }
-
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
@@ -913,7 +901,6 @@ photoInput.addEventListener('change', async (e) => {
       console.error('Image compress error:', err);
     }
   }
-
   renderPhotoPreview();
   photoInput.value = '';
 });
@@ -941,8 +928,29 @@ function renderPhotoPreview() {
   });
 }
 
-// ============ ADMIN ============
+// ============ ADMIN (ADD / EDIT / DELETE) ============
 const adminForm = document.getElementById('adminForm');
+
+function editProduct(id) {
+  const product = products.find(p => p.id === id);
+  if (!product) return;
+
+  editingProductId = id;
+  document.getElementById('prodName').value = getLocalizedName(product);
+  document.getElementById('prodPrice').value = product.price;
+  document.getElementById('prodDesc').value = getLocalizedDesc(product);
+  document.getElementById('prodIcon').value = product.icon;
+  
+  pendingPhotos = product.images ? [...product.images] : [];
+  renderPhotoPreview();
+
+  // Меняем текст кнопки на "Сохранить"
+  const addBtn = document.querySelector('[data-i18n="adminAddBtn"]');
+  if (addBtn) addBtn.textContent = t('adminEditBtn');
+
+  document.getElementById('adminForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  haptic('medium');
+}
 
 adminForm.addEventListener('submit', (e) => {
   e.preventDefault();
@@ -953,25 +961,47 @@ adminForm.addEventListener('submit', (e) => {
 
   if (!name || !price) return;
 
-  products.push({
-    id: Date.now(),
-    name: { ua: name, ru: name },
-    price,
-    desc: { ua: desc, ru: desc },
-    icon,
-    images: [...pendingPhotos]
-  });
+  if (editingProductId) {
+    // РЕДАКТИРОВАНИЕ
+    const index = products.findIndex(p => p.id === editingProductId);
+    if (index !== -1) {
+      products[index] = {
+        ...products[index],
+        name: { ua: name, ru: name },
+        price,
+        desc: { ua: desc, ru: desc },
+        icon,
+        images: pendingPhotos.length > 0 ? [...pendingPhotos] : products[index].images
+      };
+    }
+    editingProductId = null;
+  } else {
+    // ДОБАВЛЕНИЕ
+    products.push({
+      id: Date.now(),
+      name: { ua: name, ru: name },
+      price,
+      desc: { ua: desc, ru: desc },
+      icon,
+      images: [...pendingPhotos]
+    });
+  }
 
   try {
     localStorage.setItem('fl_products', JSON.stringify(products));
   } catch (err) {
-    alert('Недостаточно места для сохранения. Уменьшите количество фото.');
+    alert('Недостаточно места. Уменьшите количество фото.');
     return;
   }
 
   adminForm.reset();
   pendingPhotos = [];
   renderPhotoPreview();
+  
+  // Возвращаем текст кнопки
+  const addBtn = document.querySelector('[data-i18n="adminAddBtn"]');
+  if (addBtn) addBtn.textContent = t('adminAddBtn');
+  
   renderAdmin();
   haptic('success');
 });
@@ -979,11 +1009,15 @@ adminForm.addEventListener('submit', (e) => {
 function renderAdmin() {
   document.getElementById('adminCount').textContent = products.length;
   const list = document.getElementById('adminProducts');
+  
+  if (products.length === 0) {
+    list.innerHTML = `<div class="catalog-empty" style="padding: 30px 20px;"><p style="font-size: 15px;">${currentLang === 'ua' ? 'Товарів ще немає' : 'Товаров ещё нет'}</p></div>`;
+    return;
+  }
+  
   list.innerHTML = products.map((p, i) => {
     const thumbs = (p.images && p.images.length > 0)
-      ? `<div class="admin-product__photos">${p.images.slice(0, 4).map(src =>
-          `<img class="admin-product__thumb" src="${src}" alt="" />`
-        ).join('')}${p.images.length > 4 ? `<span class="admin-product__thumb" style="display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--primary-dark);">+${p.images.length - 4}</span>` : ''}</div>`
+      ? `<div class="admin-product__photos">${p.images.slice(0, 4).map(src => `<img class="admin-product__thumb" src="${src}" alt="" />`).join('')}${p.images.length > 4 ? `<span class="admin-product__thumb" style="display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--primary-dark);">+${p.images.length - 4}</span>` : ''}</div>`
       : '';
 
     return `
@@ -994,10 +1028,17 @@ function renderAdmin() {
           <div class="admin-product__price">${formatPrice(p.price)}</div>
           ${thumbs}
         </div>
-        <button class="delete-btn" data-id="${p.id}" aria-label="Delete">${ICON_DELETE}</button>
+        <div style="display:flex;gap:6px;">
+          <button class="edit-btn" data-id="${p.id}" aria-label="Edit">${ICON_EDIT}</button>
+          <button class="delete-btn" data-id="${p.id}" aria-label="Delete">${ICON_DELETE}</button>
+        </div>
       </div>
     `;
   }).join('');
+
+  list.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => editProduct(parseInt(btn.dataset.id)));
+  });
 
   list.querySelectorAll('.delete-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1008,6 +1049,15 @@ function renderAdmin() {
       setTimeout(() => {
         products = products.filter(p => p.id !== id);
         localStorage.setItem('fl_products', JSON.stringify(products));
+        
+        if (editingProductId === id) {
+          editingProductId = null;
+          adminForm.reset();
+          pendingPhotos = [];
+          renderPhotoPreview();
+          const addBtn = document.querySelector('[data-i18n="adminAddBtn"]');
+          if (addBtn) addBtn.textContent = t('adminAddBtn');
+        }
         renderAdmin();
       }, 300);
     });
@@ -1024,6 +1074,7 @@ function escapeHtml(str) {
 // ============ INIT ============
 applyTranslations();
 updateProfileName();
+updateAdminVisibility(); // Скрываем/показываем админку при старте
 updateCartBadge();
 updateFavoriteButtons();
 renderCatalog();

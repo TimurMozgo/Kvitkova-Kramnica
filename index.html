@@ -43,7 +43,7 @@
   <!-- ============ SCREENS ============ -->
   <main class="main">
 
-    <!-- HOME -->
+        <!-- HOME -->
     <section class="screen screen--active" data-screen="home">
       <div class="hero">
         <svg class="hero__flower" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
@@ -65,23 +65,39 @@
         </svg>
         <h2 class="hero__title" data-i18n="heroTitle">Ласкаво просимо!</h2>
         <p class="hero__text" data-i18n="heroText">Створюйте букети мрії з нашими свіжими квітами</p>
+        <button class="hero__cta" id="heroCtaBtn">
+          <span data-i18n="heroCta">Перейти до каталогу</span>
+          <svg viewBox="0 0 24 24"><path d="M9 6 L15 12 L9 18" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
       </div>
 
       <div class="features">
         <div class="feature-card">
-          <svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" fill="#FFE5EC"/><path d="M14 24 L22 32 L34 18" stroke="#FF6B9D" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <h3 data-i18n="feat1Title">Швидка доставка</h3>
-          <p data-i18n="feat1Text">Від 30 хвилин по місту</p>
+          <div class="feature-icon-wrap">
+            <svg viewBox="0 0 48 48"><path d="M14 24 L22 32 L34 18" stroke="#FF6B9D" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div>
+            <h3 data-i18n="feat1Title">Швидка доставка</h3>
+            <p data-i18n="feat1Text">Від 30 хвилин по місту</p>
+          </div>
         </div>
         <div class="feature-card">
-          <svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" fill="#E5F9FF"/><path d="M24 12 C18 12, 14 18, 18 24 C14 24, 14 30, 20 30 C20 34, 28 34, 28 30 C34 30, 34 24, 30 24 C34 18, 30 12, 24 12 Z" fill="#4ECDC4"/></svg>
-          <h3 data-i18n="feat2Title">Свіжі квіти</h3>
-          <p data-i18n="feat2Text">Поставка щоранку</p>
+          <div class="feature-icon-wrap">
+            <svg viewBox="0 0 48 48"><path d="M24 12 C18 12, 14 18, 18 24 C14 24, 14 30, 20 30 C20 34, 28 34, 28 30 C34 30, 34 24, 30 24 C34 18, 30 12, 24 12 Z" fill="#4ECDC4"/></svg>
+          </div>
+          <div>
+            <h3 data-i18n="feat2Title">Свіжі квіти</h3>
+            <p data-i18n="feat2Text">Поставка щоранку</p>
+          </div>
         </div>
         <div class="feature-card">
-          <svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" fill="#FFF5E5"/><path d="M24 14 L27 22 L35 22 L29 27 L31 35 L24 30 L17 35 L19 27 L13 22 L21 22 Z" fill="#FFB347"/></svg>
-          <h3 data-i18n="feat3Title">Найкращі ціни</h3>
-          <p data-i18n="feat3Text">Прямі поставки</p>
+          <div class="feature-icon-wrap">
+            <svg viewBox="0 0 48 48"><path d="M24 14 L27 22 L35 22 L29 27 L31 35 L24 30 L17 35 L19 27 L13 22 L21 22 Z" fill="#FFB347"/></svg>
+          </div>
+          <div>
+            <h3 data-i18n="feat3Title">Найкращі ціни</h3>
+            <p data-i18n="feat3Text">Прямі поставки</p>
+          </div>
         </div>
       </div>
     </section>
@@ -92,7 +108,7 @@
       <div class="catalog" id="catalog"></div>
     </section>
 
-    <!-- PRODUCT DETAIL -->
+        <!-- PRODUCT DETAIL -->
     <section class="screen" data-screen="product">
       <button class="back-btn" id="backToCatalog">
         <svg viewBox="0 0 24 24"><path d="M15 6 L9 12 L15 18" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -125,6 +141,14 @@
               <span data-i18n="pdFeature3">Гарантія якості</span>
             </div>
           </div>
+
+          <button class="btn btn--outline btn--full btn--lg" id="pdFavoriteBtn" style="margin-bottom: 12px;">
+            <svg viewBox="0 0 24 24" class="btn-icon">
+              <path class="heart-outline" d="M12 20 L10.5 18.5 C5 13.5, 3 11, 3 8 C3 5, 5 3, 8 3 C10 3, 11.5 4, 12 5.5 C12.5 4, 14 3, 16 3 C19 3, 21 5, 21 8 C21 11, 19 13.5, 13.5 18.5 Z" stroke="#FF6B9D" stroke-width="2" fill="none"/>
+              <path class="heart-filled" d="M12 20 L10.5 18.5 C5 13.5, 3 11, 3 8 C3 5, 5 3, 8 3 C10 3, 11.5 4, 12 5.5 C12.5 4, 14 3, 16 3 C19 3, 21 5, 21 8 C21 11, 19 13.5, 13.5 18.5 Z" fill="#FF6B9D" stroke="none"/>
+            </svg>
+            <span data-i18n="addToFavorites">Додати до обраного</span>
+          </button>
 
           <button class="btn btn--primary btn--full btn--lg" id="pdAddToCart">
             <svg viewBox="0 0 24 24" class="btn-icon"><path d="M12 5 L12 19 M5 12 L19 12" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>
