@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#FFF5F7" />
+  <title> Квіткова Крамниця</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ============ HEADER ============ -->
+  <header class="header">
+    <div class="header__logo">
+      <svg class="logo-icon" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="roseGrad" cx="50%" cy="40%" r="60%">
+            <stop offset="0%" stop-color="#FFB6C1"/>
+            <stop offset="100%" stop-color="#FF6B9D"/>
+          </radialGradient>
+        </defs>
+        <circle cx="20" cy="20" r="18" fill="url(#roseGrad)"/>
+        <path d="M20 10 C14 10, 10 16, 14 22 C10 22, 10 28, 16 28 C16 32, 24 32, 24 28 C30 28, 30 22, 26 22 C30 16, 26 10, 20 10 Z" fill="#fff" opacity="0.4"/>
+        <circle cx="20" cy="20" r="4" fill="#C44569"/>
+      </svg>
+      <div class="header__title">
+        <h1 data-i18n="appTitle">Квіткова Крамниця</h1>
+        <span class="header__subtitle" data-i18n="appSubtitle">Свіжі квіти щодня</span>
+      </div>
+    </div>
+
+    <button class="lang-switch" id="langSwitch" aria-label="Switch language">
+      <svg class="lang-icon" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        <ellipse cx="12" cy="12" rx="4" ry="10" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        <path d="M2 12 L22 12 M4 7 L20 7 M4 17 L20 17" stroke="currentColor" stroke-width="1.5" fill="none"/>
+      </svg>
+      <span class="lang-label" id="langLabel">UA</span>
+    </button>
+  </header>
+
+  <!-- ============ SCREENS ============ -->
+  <main class="main">
+
+    <!-- HOME -->
+    <section class="screen screen--active" data-screen="home">
+      <div class="hero">
+        <svg class="hero__flower" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="petalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#FFB6C1"/>
+              <stop offset="100%" stop-color="#FF6B9D"/>
+            </linearGradient>
+          </defs>
+          <g transform="translate(100 100)">
+            <ellipse cx="0" cy="-40" rx="22" ry="40" fill="url(#petalGrad)" opacity="0.9"/>
+            <ellipse cx="0" cy="-40" rx="22" ry="40" fill="url(#petalGrad)" opacity="0.9" transform="rotate(72)"/>
+            <ellipse cx="0" cy="-40" rx="22" ry="40" fill="url(#petalGrad)" opacity="0.9" transform="rotate(144)"/>
+            <ellipse cx="0" cy="-40" rx="22" ry="40" fill="url(#petalGrad)" opacity="0.9" transform="rotate(216)"/>
+            <ellipse cx="0" cy="-40" rx="22" ry="40" fill="url(#petalGrad)" opacity="0.9" transform="rotate(288)"/>
+            <circle cx="0" cy="0" r="18" fill="#FFD93D"/>
+            <circle cx="0" cy="0" r="10" fill="#FFA500"/>
+          </g>
+        </svg>
+        <h2 class="hero__title" data-i18n="heroTitle">Ласкаво просимо!</h2>
+        <p class="hero__text" data-i18n="heroText">Створюйте букети мрії з нашими свіжими квітами</p>
+      </div>
+
+      <div class="features">
+        <div class="feature-card">
+          <svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" fill="#FFE5EC"/><path d="M14 24 L22 32 L34 18" stroke="#FF6B9D" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <h3 data-i18n="feat1Title">Швидка доставка</h3>
+          <p data-i18n="feat1Text">Від 30 хвилин по місту</p>
+        </div>
+        <div class="feature-card">
+          <svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" fill="#E5F9FF"/><path d="M24 12 C18 12, 14 18, 18 24 C14 24, 14 30, 20 30 C20 34, 28 34, 28 30 C34 30, 34 24, 30 24 C34 18, 30 12, 24 12 Z" fill="#4ECDC4"/></svg>
+          <h3 data-i18n="feat2Title">Свіжі квіти</h3>
+          <p data-i18n="feat2Text">Поставка щоранку</p>
+        </div>
+        <div class="feature-card">
+          <svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" fill="#FFF5E5"/><path d="M24 14 L27 22 L35 22 L29 27 L31 35 L24 30 L17 35 L19 27 L13 22 L21 22 Z" fill="#FFB347"/></svg>
+          <h3 data-i18n="feat3Title">Найкращі ціни</h3>
+          <p data-i18n="feat3Text">Прямі поставки</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CATALOG -->
+    <section class="screen" data-screen="catalog">
+      <h2 class="screen__title" data-i18n="catalogTitle">Каталог</h2>
+      <div class="catalog" id="catalog"></div>
+    </section>
+
+    <!-- PRODUCT DETAIL -->
+    <section class="screen" data-screen="product">
+      <button class="back-btn" id="backToCatalog">
+        <svg viewBox="0 0 24 24"><path d="M15 6 L9 12 L15 18" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span data-i18n="backBtn">Назад</span>
+      </button>
+
+      <div class="product-detail">
+        <div class="gallery" id="productGallery">
+          <div class="gallery__track" id="galleryTrack"></div>
+          <div class="gallery__dots" id="galleryDots"></div>
+          <div class="gallery__counter" id="galleryCounter"></div>
+        </div>
+
+        <div class="product-detail__info">
+          <h1 class="product-detail__name" id="pdName"></h1>
+          <div class="product-detail__price" id="pdPrice"></div>
+          <p class="product-detail__desc" id="pdDesc"></p>
+
+          <div class="product-detail__features">
+            <div class="pd-feature">
+              <svg viewBox="0 0 24 24"><path d="M5 12 L10 17 L19 7" stroke="#4ECDC4" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span data-i18n="pdFeature1">Свіжі квіти</span>
+            </div>
+            <div class="pd-feature">
+              <svg viewBox="0 0 24 24"><path d="M5 12 L10 17 L19 7" stroke="#4ECDC4" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span data-i18n="pdFeature2">Швидка доставка</span>
+            </div>
+            <div class="pd-feature">
+              <svg viewBox="0 0 24 24"><path d="M5 12 L10 17 L19 7" stroke="#4ECDC4" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span data-i18n="pdFeature3">Гарантія якості</span>
+            </div>
+          </div>
+
+          <button class="btn btn--primary btn--full btn--lg" id="pdAddToCart">
+            <svg viewBox="0 0 24 24" class="btn-icon"><path d="M12 5 L12 19 M5 12 L19 12" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>
+            <span data-i18n="addToCart">Додати до кошика</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CART -->
+    <section class="screen" data-screen="cart">
+      <h2 class="screen__title" data-i18n="cartTitle">Кошик</h2>
+      <div class="cart-empty" id="cartEmpty">
+        <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="60" cy="60" r="55" fill="#FFE5EC"/>
+          <path d="M35 45 L45 45 L55 75 L85 75 L90 55 L50 55" stroke="#FF6B9D" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="60" cy="85" r="4" fill="#FF6B9D"/>
+          <circle cx="80" cy="85" r="4" fill="#FF6B9D"/>
+        </svg>
+        <p data-i18n="cartEmptyTitle">Кошик порожній</p>
+        <span data-i18n="cartEmptyText">Додайте квіти з каталогу</span>
+      </div>
+      <div class="cart-list" id="cartList"></div>
+      <div class="cart-footer" id="cartFooter" style="display:none;">
+        <div class="cart-total">
+          <span data-i18n="cartTotalLabel">Разом:</span>
+          <strong id="cartTotal">0 ₴</strong>
+        </div>
+        <button class="btn btn--primary" id="checkoutBtn" data-i18n="checkoutBtn">Оформити заявку</button>
+      </div>
+    </section>
+
+    <!-- ORDER -->
+    <section class="screen" data-screen="order">
+      <h2 class="screen__title" data-i18n="orderTitle">Оформлення заявки</h2>
+      <form class="order-form" id="orderForm">
+        <div class="form-group">
+          <label for="customerName" data-i18n="nameLabel">Ваше ім'я</label>
+          <div class="input-wrap">
+            <svg viewBox="0 0 24 24" class="input-icon"><circle cx="12" cy="8" r="4" fill="#FF6B9D"/><path d="M4 20 C4 15, 8 13, 12 13 C16 13, 20 15, 20 20" fill="#FF6B9D"/></svg>
+            <input type="text" id="customerName" data-i18n-placeholder="namePlaceholder" placeholder="Введіть ім'я" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="customerPhone" data-i18n="phoneLabel">Номер телефону</label>
+          <div class="input-wrap">
+            <svg viewBox="0 0 24 24" class="input-icon"><path d="M5 4 L8 4 L10 9 L7.5 10.5 C9 14, 11 16, 14.5 17.5 L16 15 L21 17 L21 20 C21 21, 13 21, 5 13 C5 5, 5 4, 5 4 Z" fill="#FF6B9D"/></svg>
+            <input type="tel" id="customerPhone" data-i18n-placeholder="phonePlaceholder" placeholder="+380 (XX) XXX-XX-XX" required />
+          </div>
+          <span class="form-error" id="phoneError"></span>
+        </div>
+        <button type="submit" class="btn btn--primary btn--full" data-i18n="submitBtn">Надіслати заявку</button>
+      </form>
+    </section>
+
+    <!-- PROFILE -->
+    <section class="screen" data-screen="profile">
+      <h2 class="screen__title" data-i18n="profileTitle">Мій профіль</h2>
+      <div class="profile-card">
+        <div class="profile-avatar" id="profileAvatar">
+          <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="avatarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FFB6C1"/>
+                <stop offset="100%" stop-color="#FF6B9D"/>
+              </linearGradient>
+            </defs>
+            <circle cx="40" cy="40" r="38" fill="url(#avatarGrad)"/>
+            <circle cx="40" cy="32" r="12" fill="#fff"/>
+            <path d="M18 65 C18 50, 28 45, 40 45 C52 45, 62 50, 62 65" fill="#fff"/>
+          </svg>
+        </div>
+        <h3 class="profile-name" id="profileName">Гість</h3>
+        <p class="profile-info" data-i18n="profileRole">Покупець</p>
+      </div>
+
+      <div class="profile-menu">
+        <div class="menu-item" data-action="orders">
+          <svg viewBox="0 0 24 24"><path d="M6 3 L18 3 L18 21 L6 21 Z M9 8 L15 8 M9 12 L15 12 M9 16 L13 16" stroke="#FF6B9D" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+          <span data-i18n="menuOrders">Мої замовлення</span>
+          <svg viewBox="0 0 24 24" class="chevron"><path d="M9 6 L15 12 L9 18" stroke="#8B8B9A" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+        </div>
+        <div class="menu-item" data-action="favorites">
+          <svg viewBox="0 0 24 24"><path d="M12 20 L10.5 18.5 C5 13.5, 3 11, 3 8 C3 5, 5 3, 8 3 C10 3, 11.5 4, 12 5.5 C12.5 4, 14 3, 16 3 C19 3, 21 5, 21 8 C21 11, 19 13.5, 13.5 18.5 Z" fill="#FF6B9D"/></svg>
+          <span data-i18n="menuFavorites">Обране</span>
+          <svg viewBox="0 0 24 24" class="chevron"><path d="M9 6 L15 12 L9 18" stroke="#8B8B9A" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+        </div>
+        <div class="menu-item" data-action="admin" id="adminBtn">
+          <svg viewBox="0 0 24 24"><path d="M12 2 L14 6 L18 6 L15 9 L16 13 L12 11 L8 13 L9 9 L6 6 L10 6 Z" fill="#FFB347"/><rect x="6" y="14" width="12" height="8" rx="2" fill="#FF6B9D"/></svg>
+          <span data-i18n="menuAdmin">Адмін-панель</span>
+          <svg viewBox="0 0 24 24" class="chevron"><path d="M9 6 L15 12 L9 18" stroke="#8B8B9A" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAVORITES -->
+    <section class="screen" data-screen="favorites">
+      <button class="back-btn" id="backToFavorites">
+        <svg viewBox="0 0 24 24"><path d="M15 6 L9 12 L15 18" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span data-i18n="backBtn">Назад</span>
+      </button>
+
+      <h2 class="screen__title" data-i18n="favoritesTitle">Обране</h2>
+      
+      <div class="favorites-empty" id="favoritesEmpty">
+        <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="60" cy="60" r="55" fill="#FFE5EC"/>
+          <path d="M60 75 L58 73 C40 58, 35 52, 35 45 C35 38, 40 34, 45 34 C50 34, 55 37, 60 43 C65 37, 70 34, 75 34 C80 34, 85 38, 85 45 C85 52, 80 58, 62 73 Z" fill="#FF6B9D" opacity="0.3"/>
+        </svg>
+        <p data-i18n="favoritesEmptyTitle">Список порожній</p>
+        <span data-i18n="favoritesEmptyText">Додайте товари до обраного</span>
+      </div>
+      
+      <div class="favorites-list" id="favoritesList"></div>
+    </section>
+
+    <!-- ORDERS (НОВЫЙ ЭКРАН) -->
+    <section class="screen" data-screen="orders">
+      <button class="back-btn" id="backToOrders">
+        <svg viewBox="0 0 24 24"><path d="M15 6 L9 12 L15 18" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span data-i18n="backBtn">Назад</span>
+      </button>
+
+      <h2 class="screen__title" data-i18n="ordersTitle">Мої замовлення</h2>
+      
+      <div class="orders-empty" id="ordersEmpty">
+        <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="60" cy="60" r="55" fill="#FFE5EC"/>
+          <rect x="40" y="45" width="40" height="35" rx="4" stroke="#FF6B9D" stroke-width="3" fill="none"/>
+          <path d="M45 55 L75 55 M45 62 L75 62 M45 69 L65 69" stroke="#FF6B9D" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <p data-i18n="ordersEmptyTitle">Замовлень немає</p>
+        <span data-i18n="ordersEmptyText">Ви ще не робили замовлень</span>
+      </div>
+      
+      <div class="orders-list" id="ordersList"></div>
+    </section>
+
+    <!-- ADMIN -->
+    <section class="screen" data-screen="admin">
+      <h2 class="screen__title" data-i18n="adminTitle">Адмін-панель</h2>
+      <div class="admin-card">
+        <h3 data-i18n="adminAddTitle">Додати товар</h3>
+        <form class="admin-form" id="adminForm">
+          <input type="text" id="prodName" data-i18n-placeholder="prodNamePh" placeholder="Назва" required />
+          <input type="number" id="prodPrice" data-i18n-placeholder="prodPricePh" placeholder="Ціна ()" required min="1" />
+          <textarea id="prodDesc" data-i18n-placeholder="prodDescPh" placeholder="Опис" rows="2"></textarea>
+          <select id="prodIcon">
+            <option value="rose">🌹 Троянда</option>
+            <option value="tulip">🌷 Тюльпан</option>
+            <option value="daisy">🌼 Ромашка</option>
+            <option value="sunflower">🌻 Соняшник</option>
+            <option value="lavender">💜 Лаванда</option>
+          </select>
+
+          <div class="photo-upload">
+            <label class="photo-upload__label" data-i18n="photoLabel">Фото товару</label>
+            <div class="photo-upload__hint" data-i18n="photoHint">До 5 фото, до 5 МБ кожне</div>
+            <label class="photo-upload__btn">
+              <svg viewBox="0 0 24 24"><path d="M12 5 L12 19 M5 12 L19 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+              <span data-i18n="photoBtn">Додати фото</span>
+              <input type="file" id="prodPhotos" accept="image/*" multiple hidden />
+            </label>
+            <div class="photo-preview" id="photoPreview"></div>
+          </div>
+
+          <button type="submit" class="btn btn--primary btn--full" data-i18n="adminAddBtn">Додати</button>
+        </form>
+      </div>
+      <div class="admin-list">
+        <h3><span data-i18n="adminProducts">Товари</span> (<span id="adminCount">0</span>)</h3>
+        <div id="adminProducts"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============ BOTTOM NAV ============ -->
+  <nav class="bottom-nav">
+    <button class="nav-btn nav-btn--active" data-target="home">
+      <svg viewBox="0 0 24 24"><path d="M3 11 L12 3 L21 11 L21 21 L15 21 L15 14 L9 14 L9 21 L3 21 Z" fill="currentColor"/></svg>
+      <span data-i18n="navHome">Головна</span>
+    </button>
+    <button class="nav-btn" data-target="catalog">
+      <svg viewBox="0 0 24 24"><path d="M4 6 L20 6 M4 12 L20 12 M4 18 L20 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span data-i18n="navCatalog">Каталог</span>
+    </button>
+    <button class="nav-btn" data-target="cart">
+      <svg viewBox="0 0 24 24"><path d="M5 5 L7 5 L10 16 L19 16 L21 8 L8 8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="20" r="1.5" fill="currentColor"/><circle cx="18" cy="20" r="1.5" fill="currentColor"/></svg>
+      <span class="nav-badge hidden" id="cartBadge">0</span>
+      <span data-i18n="navCart">Кошик</span>
+    </button>
+    <button class="nav-btn" data-target="profile">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4 21 C4 16, 8 14, 12 14 C16 14, 20 16, 20 21" fill="currentColor"/></svg>
+      <span data-i18n="navProfile">Профіль</span>
+    </button>
+  </nav>
+
+  <!-- ============ SUCCESS MODAL ============ -->
+  <div class="modal" id="successModal">
+    <div class="modal__backdrop"></div>
+    <div class="modal__content">
+      <svg class="success-icon" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="successGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#4ECDC4"/>
+            <stop offset="100%" stop-color="#44A08D"/>
+          </linearGradient>
+        </defs>
+        <circle cx="60" cy="60" r="55" fill="url(#successGrad)"/>
+        <path class="check-path" d="M35 60 L52 77 L85 44" stroke="#fff" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <h3 data-i18n="modalTitle">Заявку надіслано!</h3>
+      <p data-i18n="modalText">Ми зв'яжемося з вами найближчим часом</p>
+      <button class="btn btn--primary" id="closeModal" data-i18n="modalBtn">Чудово</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
