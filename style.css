@@ -1832,3 +1832,4 @@ h2 {
 @media (min-width: 768px) {
   .catalog { grid-template-columns: repeat(4, 1fr); }
 }
+
