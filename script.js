@@ -11,8 +11,9 @@ const haptic = (type = 'light') => {
   try { tg?.HapticFeedback?.impactOccurred(type); } catch(e){}
 };
 
-// ============ API CONFIG ============
-const API_URL = 'https://tiktiok.xyz/webhook';
+// ============ API CONFIG (Отдельные URL для удобства) ============
+const API_GET_PRODUCTS = 'https://tiktiok.xyz/webhook/get-products';
+const API_ADD_PRODUCT = 'https://tiktiok.xyz/webhook-test/add-product';
 
 // ============ I18N ============
 const I18N = {
@@ -84,7 +85,7 @@ let pendingPhotos = [];
 
 async function loadProductsFromServer() {
   try {
-    const response = await fetch(`${API_URL}/get-products`);
+    const response = await fetch(API_GET_PRODUCTS);
     if (response.ok) {
       const data = await response.json();
       products = data.map(row => ({
@@ -607,7 +608,7 @@ adminForm.addEventListener('submit', async (e) => {
   if (addBtn) addBtn.textContent = '⏳ Збереження...';
 
   try {
-    const response = await fetch(`${API_URL}/add-product`, {
+    const response = await fetch(API_ADD_PRODUCT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(productPayload)
