@@ -11,9 +11,9 @@ const haptic = (type = 'light') => {
   try { tg?.HapticFeedback?.impactOccurred(type); } catch(e){}
 };
 
-// ============ API CONFIG (Отдельные URL для удобства) ============
-const API_GET_PRODUCTS = 'https://tiktiok.xyz/webhook/get-products';
-const API_ADD_PRODUCT = 'https://tiktiok.xyz/webhook-test/add-product';
+// ============ SUPABASE CONFIG ============
+const SUPABASE_URL = 'https://suzzmeyxjxjddbxbzsbb.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_tOW6vFluEzjX-RiNRbcMQw_8SeDFc7J';
 
 // ============ I18N ============
 const I18N = {
@@ -85,7 +85,12 @@ let pendingPhotos = [];
 
 async function loadProductsFromServer() {
   try {
-    const response = await fetch(API_GET_PRODUCTS);
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*`, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      }
+    });
     if (response.ok) {
       const data = await response.json();
       products = data.map(row => ({
@@ -600,7 +605,7 @@ adminForm.addEventListener('submit', async (e) => {
 
   const productPayload = {
     id: productId, name_ua: name, name_ru: name, price: price, desc_ua: desc, desc_ru: desc, icon: icon,
-    images: pendingPhotos.join(',') // Отправляем как строку через запятую
+    images: pendingPhotos.join(',')
   };
 
   const addBtn = document.querySelector('[data-i18n="adminAddBtn"]');
@@ -608,31 +613,51 @@ adminForm.addEventListener('submit', async (e) => {
   if (addBtn) addBtn.textContent = '⏳ Збереження...';
 
   try {
-    const response = await fetch(API_ADD_PRODUCT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(productPayload)
+    // Проверяем, существует ли товар
+    const checkResponse = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${productId}`, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      }
     });
+    const existing = await checkResponse.json();
+
+    let response;
+    if (existing.length > 0) {
+      // Обновляем существующий
+      response = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${productId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify(productPayload)
+      });
+    } else {
+      // Создаём новый
+      response = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify(productPayload)
+      });
+    }
 
     if (response.ok) {
-      await loadProductsFromServer(); // Перезагружаем с сервера
+      await loadProductsFromServer();
       adminForm.reset(); pendingPhotos = []; renderPhotoPreview(); editingProductId = null;
       if (addBtn) addBtn.textContent = originalBtnText;
       haptic('success');
     } else { throw new Error('Server error'); }
   } catch (err) {
-    console.error('Помилка відправки в n8n:', err);
-    alert('Немає зв\'язку з сервером. Товар збережено лише локально.');
-    // Fallback: сохраняем локально, чтобы админ не потерял данные
-    if (editingProductId) {
-      const index = products.findIndex(p => p.id === editingProductId);
-      if (index !== -1) products[index] = { ...products[index], name: {ua: name, ru: name}, price, desc: {ua: desc, ru: desc}, icon, images: [...pendingPhotos] };
-      editingProductId = null;
-    } else {
-      products.push({ id: productId, name: {ua: name, ru: name}, price, desc: {ua: desc, ru: desc}, icon, images: [...pendingPhotos] });
-    }
-    localStorage.setItem('fl_products', JSON.stringify(products));
-    renderCatalog();
+    console.error('Помилка:', err);
+    alert('Немає зв\'язку з сервером.');
     if (addBtn) addBtn.textContent = originalBtnText;
   }
 });
