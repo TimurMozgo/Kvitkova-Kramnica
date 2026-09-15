@@ -13,7 +13,7 @@ const haptic = (type = 'light') => {
 
 // ============ SUPABASE CONFIG ============
 const SUPABASE_URL = 'https://suzzmeyxjxjddbxbzsbb.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_tOW6vFluEzjX-RiNRbcMQw_8SeDFc7J';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1enptZXl4anhqZGRieGJ6c2JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0NTY1MTQsImV4cCI6MjEwNTAzMjUxNH0.Kl3UW_7j0l3wzJCuCALJwP0Xh261DnLrHtNKE70uwhU';
 
 // ============ I18N ============
 const I18N = {
@@ -138,13 +138,23 @@ function formatPrice(price) { return price.toLocaleString('uk-UA') + ' ₴'; }
 
 // ============ ADMIN VISIBILITY ============
 const ADMIN_IDS = [1246079025, 6088315974];
+
 function isAdmin() {
+  // Если открыто в обычном браузере (без Telegram) — даём доступ для тестов
+  if (!tg) {
+    return true;
+  }
+  
+  // Если открыто в Telegram — проверяем ID
   const userId = tg?.initDataUnsafe?.user?.id;
   return userId && ADMIN_IDS.includes(Number(userId));
 }
+
 function updateAdminVisibility() {
   const adminBtn = document.getElementById('adminBtn');
-  if (adminBtn) adminBtn.style.display = isAdmin() ? 'flex' : 'none';
+  if (adminBtn) {
+    adminBtn.style.display = isAdmin() ? 'flex' : 'none';
+  }
 }
 
 // ============ FAVORITES ============
@@ -603,16 +613,50 @@ adminForm.addEventListener('submit', async (e) => {
   const isNewProduct = !editingProductId;
   const productId = isNewProduct ? Date.now() : editingProductId;
 
-  const productPayload = {
-    id: productId, name_ua: name, name_ru: name, price: price, desc_ua: desc, desc_ru: desc, icon: icon,
-    images: pendingPhotos.join(',')
-  };
-
   const addBtn = document.querySelector('[data-i18n="adminAddBtn"]');
   const originalBtnText = addBtn ? addBtn.textContent : 'Додати';
-  if (addBtn) addBtn.textContent = '⏳ Збереження...';
+  if (addBtn) addBtn.textContent = '⏳ Завантаження...';
 
   try {
+    // Загружаем фото в Supabase Storage и получаем URL
+    const imageUrls = [];
+    for (let i = 0; i < pendingPhotos.length; i++) {
+      const base64 = pendingPhotos[i];
+      const blob = await fetch(base64).then(r => r.blob());
+      const fileName = `${productId}_${i}_${Date.now()}.jpg`;
+      
+      // Загружаем файл в Storage
+      const uploadResponse = await fetch(
+        `${SUPABASE_URL}/storage/v1/object/products/${fileName}`,
+        {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'image/jpeg'
+          },
+          body: blob
+        }
+      );
+      
+      if (!uploadResponse.ok) throw new Error('Upload failed');
+      
+      // Публичный URL картинки
+      const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/products/${fileName}`;
+      imageUrls.push(publicUrl);
+    }
+
+    const productPayload = {
+      id: productId,
+      name_ua: name,
+      name_ru: name,
+      price: price,
+      desc_ua: desc,
+      desc_ru: desc,
+      icon: icon,
+      images: imageUrls.join(',') // Сохраняем URL через запятую
+    };
+
     // Проверяем, существует ли товар
     const checkResponse = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${productId}`, {
       headers: {
@@ -624,7 +668,6 @@ adminForm.addEventListener('submit', async (e) => {
 
     let response;
     if (existing.length > 0) {
-      // Обновляем существующий
       response = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${productId}`, {
         method: 'PATCH',
         headers: {
@@ -636,7 +679,6 @@ adminForm.addEventListener('submit', async (e) => {
         body: JSON.stringify(productPayload)
       });
     } else {
-      // Создаём новый
       response = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
         method: 'POST',
         headers: {
@@ -651,7 +693,10 @@ adminForm.addEventListener('submit', async (e) => {
 
     if (response.ok) {
       await loadProductsFromServer();
-      adminForm.reset(); pendingPhotos = []; renderPhotoPreview(); editingProductId = null;
+      adminForm.reset();
+      pendingPhotos = [];
+      renderPhotoPreview();
+      editingProductId = null;
       if (addBtn) addBtn.textContent = originalBtnText;
       haptic('success');
     } else { throw new Error('Server error'); }
