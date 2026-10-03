@@ -602,6 +602,9 @@ function editProduct(id) {
   haptic('medium');
 }
 
+// ==========================================
+// АДМИН: ДОБАВЛЕНИЕ / РЕДАКТИРОВАНИЕ ТОВАРА
+// ==========================================
 adminForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const name = document.getElementById('prodName').value.trim();
@@ -611,21 +614,25 @@ adminForm.addEventListener('submit', async (e) => {
   if (!name || !price) return;
 
   const isNewProduct = !editingProductId;
-  const productId = isNewProduct ? Date.now() : editingProductId;
+  const productId = isNewProduct ? Date.now() : Number(editingProductId);
 
   const addBtn = document.querySelector('[data-i18n="adminAddBtn"]');
   const originalBtnText = addBtn ? addBtn.textContent : 'Додати';
   if (addBtn) addBtn.textContent = '⏳ Завантаження...';
 
   try {
-    // Загружаем фото в Supabase Storage и получаем URL
-    const imageUrls = [];
-    for (let i = 0; i < pendingPhotos.length; i++) {
-      const base64 = pendingPhotos[i];
+    // 1. Разделяем старые URL и новые base64 картинки
+    const existingUrls = pendingPhotos.filter(p => typeof p === 'string' && p.startsWith('http'));
+    const newBase64Photos = pendingPhotos.filter(p => typeof p === 'string' && p.startsWith('data:image'));
+
+    const imageUrls = [...existingUrls];
+
+    // 2. Загружаем в Supabase Storage ТОЛЬКО новые фото
+    for (let i = 0; i < newBase64Photos.length; i++) {
+      const base64 = newBase64Photos[i];
       const blob = await fetch(base64).then(r => r.blob());
       const fileName = `${productId}_${i}_${Date.now()}.jpg`;
       
-      // Загружаем файл в Storage
       const uploadResponse = await fetch(
         `${SUPABASE_URL}/storage/v1/object/products/${fileName}`,
         {
@@ -641,7 +648,6 @@ adminForm.addEventListener('submit', async (e) => {
       
       if (!uploadResponse.ok) throw new Error('Upload failed');
       
-      // Публичный URL картинки
       const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/products/${fileName}`;
       imageUrls.push(publicUrl);
     }
@@ -654,20 +660,12 @@ adminForm.addEventListener('submit', async (e) => {
       desc_ua: desc,
       desc_ru: desc,
       icon: icon,
-      images: imageUrls.join(',') // Сохраняем URL через запятую
+      images: imageUrls.join(',')
     };
 
-    // Проверяем, существует ли товар
-    const checkResponse = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${productId}`, {
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`
-      }
-    });
-    const existing = await checkResponse.json();
-
     let response;
-    if (existing.length > 0) {
+    if (!isNewProduct) {
+      // РЕДАКТИРОВАНИЕ (PATCH)
       response = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${productId}`, {
         method: 'PATCH',
         headers: {
@@ -679,6 +677,7 @@ adminForm.addEventListener('submit', async (e) => {
         body: JSON.stringify(productPayload)
       });
     } else {
+      // ДОБАВЛЕНИЕ (POST)
       response = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
         method: 'POST',
         headers: {
@@ -692,28 +691,59 @@ adminForm.addEventListener('submit', async (e) => {
     }
 
     if (response.ok) {
-      await loadProductsFromServer();
+      const result = await response.json();
+      const savedProduct = result[0];
+
+      // Формируем объект для локального состояния
+      const localProduct = {
+        id: Number(savedProduct.id),
+        name: { ua: savedProduct.name_ua, ru: savedProduct.name_ru },
+        price: Number(savedProduct.price),
+        desc: { ua: savedProduct.desc_ua, ru: savedProduct.desc_ru },
+        icon: savedProduct.icon,
+        images: savedProduct.images ? savedProduct.images.split(',') : []
+      };
+
+      // 🔥 ОБНОВЛЯЕМ LOCALSTORAGE НЕМЕДЛЕННО
+      if (isNewProduct) {
+        products.push(localProduct);
+      } else {
+        const index = products.findIndex(p => p.id === localProduct.id);
+        if (index !== -1) products[index] = localProduct;
+      }
+      localStorage.setItem('fl_products', JSON.stringify(products));
+
+      // Сброс формы и интерфейса
       adminForm.reset();
       pendingPhotos = [];
       renderPhotoPreview();
       editingProductId = null;
       if (addBtn) addBtn.textContent = originalBtnText;
+
+      renderAdmin(); // Мгновенно перерисовываем список
       haptic('success');
-    } else { throw new Error('Server error'); }
+    } else {
+      throw new Error('Server error');
+    }
   } catch (err) {
     console.error('Помилка:', err);
-    alert('Немає зв\'язку з сервером.');
+    alert('Немає зв\'язку з сервером або помилка завантаження.');
     if (addBtn) addBtn.textContent = originalBtnText;
   }
 });
 
+// ==========================================
+// АДМИН: ОТРИСОВКА СПИСКА И УДАЛЕНИЕ
+// ==========================================
 function renderAdmin() {
   document.getElementById('adminCount').textContent = products.length;
   const list = document.getElementById('adminProducts');
+  
   if (products.length === 0) {
     list.innerHTML = `<div class="catalog-empty" style="padding: 30px 20px;"><p style="font-size: 15px;">${currentLang === 'ua' ? 'Товарів ще немає' : 'Товаров ещё нет'}</p></div>`;
     return;
   }
+  
   list.innerHTML = products.map((p, i) => {
     const thumbs = (p.images && p.images.length > 0)
       ? `<div class="admin-product__photos">${p.images.slice(0, 4).map(src => `<img class="admin-product__thumb" src="${src}" alt="" />`).join('')}${p.images.length > 4 ? `<span class="admin-product__thumb" style="display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--primary-dark);">+${p.images.length - 4}</span>` : ''}</div>`
@@ -733,22 +763,50 @@ function renderAdmin() {
       </div>`;
   }).join('');
 
-  list.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', () => editProduct(parseInt(btn.dataset.id))));
+  // Навешиваем обработчики
+  list.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => editProduct(parseInt(btn.dataset.id)));
+  });
+
   list.querySelectorAll('.delete-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const id = parseInt(btn.dataset.id);
       const card = btn.closest('.admin-product');
-      card.classList.add('removing'); haptic('light');
-      setTimeout(() => {
+      card.classList.add('removing'); 
+      haptic('light');
+      
+      try {
+        // 1. Удаляем из Supabase
+        const deleteResponse = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${id}`, {
+          method: 'DELETE',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`
+          }
+        });
+
+        if (!deleteResponse.ok) throw new Error('Не удалось удалить с сервера');
+
+        // 2. Удаляем из локального массива и сохраняем в LocalStorage
         products = products.filter(p => p.id !== id);
         localStorage.setItem('fl_products', JSON.stringify(products));
+        
+        // 3. Сбрасываем форму, если удаляли товар, который сейчас редактировался
         if (editingProductId === id) {
-          editingProductId = null; adminForm.reset(); pendingPhotos = []; renderPhotoPreview();
+          editingProductId = null; 
+          adminForm.reset(); 
+          pendingPhotos = []; 
+          renderPhotoPreview();
           const addBtn = document.querySelector('[data-i18n="adminAddBtn"]');
           if (addBtn) addBtn.textContent = t('adminAddBtn');
         }
+        
         renderAdmin();
-      }, 300);
+      } catch (err) {
+        console.error('Ошибка удаления:', err);
+        alert('Помилка при видаленні товару');
+        card.classList.remove('removing'); // Отменяем анимацию при ошибке
+      }
     });
   });
 }
