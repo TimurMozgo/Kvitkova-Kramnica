@@ -11,9 +11,7 @@ const haptic = (type = 'light') => {
   try { tg?.HapticFeedback?.impactOccurred(type); } catch(e){}
 };
 
-// ============ SUPABASE CONFIG ============
-const SUPABASE_URL = 'https://suzzmeyxjxjddbxbzsbb.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1enptZXl4anhqZGRieGJ6c2JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0NTY1MTQsImV4cCI6MjEwNTAzMjUxNH0.Kl3UW_7j0l3wzJCuCALJwP0Xh261DnLrHtNKE70uwhU';
+
 
 // ============ I18N ============
 const I18N = {
@@ -83,29 +81,13 @@ let orders = JSON.parse(localStorage.getItem('fl_orders')) || [];
 let currentProductId = null;
 let pendingPhotos = [];
 
-async function loadProductsFromServer() {
+function loadProducts() {
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*`, {
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`
-      }
-    });
-    if (response.ok) {
-      const data = await response.json();
-      products = data.map(row => ({
-        id: Number(row.id),
-        name: { ua: row.name_ua, ru: row.name_ru },
-        price: Number(row.price),
-        desc: { ua: row.desc_ua, ru: row.desc_ru },
-        icon: row.icon,
-        images: row.images ? row.images.split(',') : []
-      }));
-      localStorage.setItem('fl_products', JSON.stringify(products));
-    } else { throw new Error('Failed to fetch'); }
-  } catch (error) {
-    console.warn('Сервер недоступен, используем локальный кэш:', error);
-    products = JSON.parse(localStorage.getItem('fl_products')) || [];
+    const stored = localStorage.getItem('fl_products');
+    products = stored ? JSON.parse(stored) : [];
+  } catch (e) {
+    console.warn('Ошибка чтения localStorage:', e);
+    products = [];
   }
   renderCatalog();
 }
@@ -605,131 +587,59 @@ function editProduct(id) {
 // ==========================================
 // АДМИН: ДОБАВЛЕНИЕ / РЕДАКТИРОВАНИЕ ТОВАРА
 // ==========================================
-adminForm.addEventListener('submit', async (e) => {
+// ============ АДМИН: ДОБАВЛЕНИЕ / РЕДАКТИРОВАНИЕ (LOCALSTORAGE) ============
+adminForm.addEventListener('submit', (e) => {
   e.preventDefault();
   const name = document.getElementById('prodName').value.trim();
   const price = parseInt(document.getElementById('prodPrice').value);
   const desc = document.getElementById('prodDesc').value.trim();
   const icon = document.getElementById('prodIcon').value;
-  if (!name || !price) return;
+  
+  if (!name || !price) {
+    alert('Будь ласка, заповніть назву та ціну');
+    return;
+  }
 
   const isNewProduct = !editingProductId;
   const productId = isNewProduct ? Date.now() : Number(editingProductId);
 
   const addBtn = document.querySelector('[data-i18n="adminAddBtn"]');
   const originalBtnText = addBtn ? addBtn.textContent : 'Додати';
-  if (addBtn) addBtn.textContent = '⏳ Завантаження...';
+  if (addBtn) addBtn.textContent = '⏳ Збереження...';
 
-  try {
-    // 1. Разделяем старые URL и новые base64 картинки
-    const existingUrls = pendingPhotos.filter(p => typeof p === 'string' && p.startsWith('http'));
-    const newBase64Photos = pendingPhotos.filter(p => typeof p === 'string' && p.startsWith('data:image'));
+  // pendingPhotos уже содержит сжатые Base64 строки благодаря функции compressImage
+  // Мы просто сохраняем их как есть в массив
+  const productData = {
+    id: productId,
+    name: { ua: name, ru: name },
+    price: price,
+    desc: { ua: desc, ru: desc },
+    icon: icon,
+    images: [...pendingPhotos] 
+  };
 
-    const imageUrls = [...existingUrls];
-
-    // 2. Загружаем в Supabase Storage ТОЛЬКО новые фото
-    for (let i = 0; i < newBase64Photos.length; i++) {
-      const base64 = newBase64Photos[i];
-      const blob = await fetch(base64).then(r => r.blob());
-      const fileName = `${productId}_${i}_${Date.now()}.jpg`;
-      
-      const uploadResponse = await fetch(
-        `${SUPABASE_URL}/storage/v1/object/products/${fileName}`,
-        {
-          method: 'POST',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'image/jpeg'
-          },
-          body: blob
-        }
-      );
-      
-      if (!uploadResponse.ok) throw new Error('Upload failed');
-      
-      const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/products/${fileName}`;
-      imageUrls.push(publicUrl);
+  if (isNewProduct) {
+    products.push(productData);
+  } else {
+    const index = products.findIndex(p => p.id === productId);
+    if (index !== -1) {
+      products[index] = productData;
     }
-
-    const productPayload = {
-      id: productId,
-      name_ua: name,
-      name_ru: name,
-      price: price,
-      desc_ua: desc,
-      desc_ru: desc,
-      icon: icon,
-      images: imageUrls.join(',')
-    };
-
-    let response;
-    if (!isNewProduct) {
-      // РЕДАКТИРОВАНИЕ (PATCH)
-      response = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${productId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
-          'Prefer': 'return=representation'
-        },
-        body: JSON.stringify(productPayload)
-      });
-    } else {
-      // ДОБАВЛЕНИЕ (POST)
-      response = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
-          'Prefer': 'return=representation'
-        },
-        body: JSON.stringify(productPayload)
-      });
-    }
-
-    if (response.ok) {
-      const result = await response.json();
-      const savedProduct = result[0];
-
-      // Формируем объект для локального состояния
-      const localProduct = {
-        id: Number(savedProduct.id),
-        name: { ua: savedProduct.name_ua, ru: savedProduct.name_ru },
-        price: Number(savedProduct.price),
-        desc: { ua: savedProduct.desc_ua, ru: savedProduct.desc_ru },
-        icon: savedProduct.icon,
-        images: savedProduct.images ? savedProduct.images.split(',') : []
-      };
-
-      // 🔥 ОБНОВЛЯЕМ LOCALSTORAGE НЕМЕДЛЕННО
-      if (isNewProduct) {
-        products.push(localProduct);
-      } else {
-        const index = products.findIndex(p => p.id === localProduct.id);
-        if (index !== -1) products[index] = localProduct;
-      }
-      localStorage.setItem('fl_products', JSON.stringify(products));
-
-      // Сброс формы и интерфейса
-      adminForm.reset();
-      pendingPhotos = [];
-      renderPhotoPreview();
-      editingProductId = null;
-      if (addBtn) addBtn.textContent = originalBtnText;
-
-      renderAdmin(); // Мгновенно перерисовываем список
-      haptic('success');
-    } else {
-      throw new Error('Server error');
-    }
-  } catch (err) {
-    console.error('Помилка:', err);
-    alert('Немає зв\'язку з сервером або помилка завантаження.');
-    if (addBtn) addBtn.textContent = originalBtnText;
   }
+
+  // 🔥 СОХРАНЯЕМ В LOCALSTORAGE
+  localStorage.setItem('fl_products', JSON.stringify(products));
+
+  // Сброс интерфейса
+  adminForm.reset();
+  pendingPhotos = [];
+  renderPhotoPreview();
+  editingProductId = null;
+  if (addBtn) addBtn.textContent = originalBtnText;
+
+  renderAdmin();
+  renderCatalog(); // Обновляем каталог сразу
+  haptic('success');
 });
 
 // ==========================================
@@ -768,30 +678,21 @@ function renderAdmin() {
     btn.addEventListener('click', () => editProduct(parseInt(btn.dataset.id)));
   });
 
-  list.querySelectorAll('.delete-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
+    list.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
       const id = parseInt(btn.dataset.id);
       const card = btn.closest('.admin-product');
       card.classList.add('removing'); 
       haptic('light');
       
-      try {
-        // 1. Удаляем из Supabase
-        const deleteResponse = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${id}`, {
-          method: 'DELETE',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`
-          }
-        });
-
-        if (!deleteResponse.ok) throw new Error('Не удалось удалить с сервера');
-
-        // 2. Удаляем из локального массива и сохраняем в LocalStorage
+      setTimeout(() => {
+        // 1. Удаляем из локального массива
         products = products.filter(p => p.id !== id);
+        
+        // 2. Сохраняем изменения в LocalStorage
         localStorage.setItem('fl_products', JSON.stringify(products));
         
-        // 3. Сбрасываем форму, если удаляли товар, который сейчас редактировался
+        // 3. Сбрасываем форму, если удаляли редактируемый товар
         if (editingProductId === id) {
           editingProductId = null; 
           adminForm.reset(); 
@@ -802,11 +703,8 @@ function renderAdmin() {
         }
         
         renderAdmin();
-      } catch (err) {
-        console.error('Ошибка удаления:', err);
-        alert('Помилка при видаленні товару');
-        card.classList.remove('removing'); // Отменяем анимацию при ошибке
-      }
+        renderCatalog();
+      }, 300); // Ждем окончания анимации
     });
   });
 }
@@ -822,4 +720,4 @@ updateProfileName();
 updateAdminVisibility();
 updateCartBadge();
 updateFavoriteButtons();
-loadProductsFromServer(); // Загружаем товары с твоего n8n при старте
+loadProducts(); 
